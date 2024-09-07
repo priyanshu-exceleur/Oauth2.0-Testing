@@ -1,0 +1,182 @@
+1. Register a User (Optional)
+First, register a user in your system by sending a POST request:
+
+Request:
+Method: POST
+URL: http://localhost:3000/register
+Body: (JSON)
+json
+Copy code
+{
+  "username": "testuser",
+  "password": "testpass"
+}
+Expected Response:
+json
+Copy code
+{
+  "message": "User registered successfully"
+}
+2. Log In a User
+To simulate user authentication and to store the user in the session, log in with the user you just registered.
+
+Request:
+Method: POST
+URL: http://localhost:3000/login
+Body: (JSON)
+json
+Copy code
+{
+  "username": "testuser",
+  "password": "testpass"
+}
+Expected Response:
+json
+Copy code
+{
+  "message": "Logged in",
+  "userId": "<user_id>"
+}
+3. Register a Client
+Now, register a new OAuth2 client to receive a clientId and clientSecret.
+
+Request:
+Method: POST
+URL: http://localhost:3000/clients/register
+Body: (JSON)
+json
+Copy code
+{
+  "redirectUris": ["http://localhost:3000/callback"],
+  "grants": ["authorization_code", "refresh_token"]
+}
+Expected Response:
+json
+Copy code
+{
+  "clientId": "<client_id>",
+  "clientSecret": "<client_secret>"
+}
+Make note of the clientId and clientSecret for the next steps.
+
+4. Get Authorization Code
+Now that you're logged in as a user, you can initiate the OAuth2 Authorization Code flow.
+
+Request:
+Method: GET
+URL: http://localhost:3000/authorize
+Query Parameters:
+response_type=code
+client_id=<client_id>
+redirect_uri=http://localhost:3000/callback
+state=random_state
+Example URL:
+
+bash
+Copy code
+http://localhost:3000/authorize?response_type=code&client_id=<client_id>&redirect_uri=http://localhost:3000/callback&state=random_state
+Expected Behavior:
+This request will redirect to your redirect_uri with an authorization code appended as a query parameter, like so:
+
+bash
+Copy code
+http://localhost:3000/callback?code=<auth_code>&state=random_state
+Make note of the code parameter from the URL for the next step.
+
+5. Exchange Authorization Code for Access Token
+Now, you will exchange the authorization code for an access token and refresh token.
+
+Request:
+Method: POST
+URL: http://localhost:3000/token
+Body: (JSON)
+json
+Copy code
+{
+  "grant_type": "authorization_code",
+  "code": "<auth_code>",
+  "redirect_uri": "http://localhost:3000/callback",
+  "client_id": "<client_id>",
+  "client_secret": "<client_secret>"
+}
+Expected Response:
+json
+Copy code
+{
+  "accessToken": "<access_token>",
+  "refreshToken": "<refresh_token>"
+}
+Make note of the accessToken for accessing protected resources and the refreshToken for refreshing access tokens.
+
+6. Access Protected Resource
+Now that you have an accessToken, use it to access a protected resource.
+
+Request:
+Method: GET
+URL: http://localhost:3000/resource
+Headers:
+Authorization: Bearer <access_token>
+Expected Response:
+json
+Copy code
+{
+  "message": "Access granted",
+  "userId": "<user_id>"
+}
+If the token is expired or invalid, you will receive an error.
+
+7. Refresh Access Token
+If your access token has expired, you can use the refreshToken to generate a new one.
+
+Request:
+Method: POST
+URL: http://localhost:3000/token/refresh
+Body: (JSON)
+json
+Copy code
+{
+  "grant_type": "refresh_token",
+  "refresh_token": "<refresh_token>",
+  "client_id": "<client_id>",
+  "client_secret": "<client_secret>"
+}
+Expected Response:
+json
+Copy code
+{
+  "accessToken": "<new_access_token>",
+  "refreshToken": "<new_refresh_token>"
+}
+Now, use the new accessToken to access protected resources again.
+
+Testing with Postman:
+Register and Log In: Use POST requests to http://localhost:3000/register and http://localhost:3000/login.
+Store Cookies: Postman will store session cookies after logging in. Ensure that Cookie headers are passed to subsequent requests automatically.
+Authorization Flow: Use the GET /authorize to initiate the OAuth2 flow, then handle the redirect in Postman manually (or simulate it by copying the URL and parsing the code).
+Exchange Code for Token: Use POST /token to exchange the code for access and refresh tokens.
+Use Tokens: Use GET /resource to access protected resources with the access token.
+Testing with cURL:
+User Registration:
+bash
+Copy code
+curl -X POST http://localhost:3000/register -H "Content-Type: application/json" -d '{"username": "testuser", "password": "testpass"}'
+User Login:
+bash
+Copy code
+curl -X POST http://localhost:3000/login -H "Content-Type: application/json" -d '{"username": "testuser", "password": "testpass"}'
+Client Registration:
+bash
+Copy code
+curl -X POST http://localhost:3000/clients/register -H "Content-Type: application/json" -d '{"redirectUris": ["http://localhost:3000/callback"], "grants": ["authorization_code", "refresh_token"]}'
+Get Authorization Code:
+bash
+Copy code
+curl "http://localhost:3000/authorize?response_type=code&client_id=<client_id>&redirect_uri=http://localhost:3000/callback&state=random_state"
+Exchange Code for Token:
+bash
+Copy code
+curl -X POST http://localhost:3000/token -H "Content-Type: application/json" -d '{"grant_type": "authorization_code", "code": "<auth_code>", "redirect_uri": "http://localhost:3000/callback", "client_id": "<client_id>", "client_secret": "<client_secret>"}'
+Access Protected Resource:
+bash
+Copy code
+curl -H "Authorization: Bearer <access_token>" http://localhost:3000/resource
