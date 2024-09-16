@@ -15,20 +15,18 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Set up session middleware
 app.use(session({
-  secret: 'your_secret_key',
-  resave: false,
-  saveUninitialized: true,
+  secret: 'your_secret_key',     // Replace with your own secret
+  resave: false,                 // Don't save session if unmodified
+  saveUninitialized: false,      // Don't create session until something stored
   cookie: {
-    secure: false,  // Set this to `true` if you’re using HTTPS
-    httpOnly: true,
-    sameSite: 'lax' // Adjust based on your needs
+    secure: false,               // Set to true if using HTTPS
+    httpOnly: true,              // Prevent client-side JavaScript from accessing the cookie
+    maxAge: 60 * 60 * 1000       // Session expires in 1 hour
   }
 }));
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost/oauth2-example', () => {
-  console.log("Connected to MongoDb")
-});
+mongoose.connect('mongodb://localhost/oauth2-example');
 
 // Utility function to generate random strings
 function generateRandomString(length) {
@@ -72,8 +70,8 @@ app.post('/login', async (req, res) => {
   const username = req.body.username
   console.log(username)
   const user = await User.findOne({ username });
-
   if (user) {
+    console.log("user", user)
     // Authenticate the user and create a session
     req.session.user = user;
 
