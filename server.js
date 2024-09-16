@@ -6,6 +6,8 @@ const crypto = require('crypto');
 const session = require('express-session');
 const { User, Client, AuthCode } = require('./models/model');
 const cors = require('cors');
+require("dotenv").config()
+
 
 const app = express();
 app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
@@ -26,7 +28,11 @@ app.use(session({
 }));
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost/oauth2-example');
+main().catch(err => console.log("Get error while Connecting MongoDB", err))
+async function main() {
+  await mongoose.connect(`${process.env.MONGO_URL}`);
+  console.log("Connected yo MongoDB Successfully")
+}
 
 // Utility function to generate random strings
 function generateRandomString(length) {
@@ -182,6 +188,6 @@ app.get('/resource', (req, res) => {
 });
 
 // Start the server
-app.listen(3000, () => {
-  console.log('OAuth 2.0 server running on http://localhost:3000');
+app.listen(process.env.PORT || 3000, () => {
+  console.log(`OAuth 2.0 server running on http://localhost:${process.env.PORT}`);
 });
